@@ -78,37 +78,49 @@ if [ -z "$PROJECT_ID" ]; then
     RANDOM_SUFFIX=$(LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c "$MAX_SUFFIX_LEN")
     RANDOM_PROJECT_ID="${CODELAB_PROJECT_PREFIX}-${RANDOM_SUFFIX}"
 
-    while true; do
-        echo ""
-        echo "Select a Project ID:"
-        echo "  1. Press Enter to CREATE a new project: $RANDOM_PROJECT_ID"
-        echo "  2. Or type an existing Project ID to use."
-        read -p "Project ID: " USER_INPUT
+    echo -e "Creating project: ${CYAN}${RANDOM_PROJECT_ID}${NC}"
 
-        TARGET_ID="${USER_INPUT:-$RANDOM_PROJECT_ID}"
+    if gcloud projects create "$RANDOM_PROJECT_ID" --quiet; then
+        echo -e "${GREEN}✓ Successfully created project '$RANDOM_PROJECT_ID'.${NC}"
+        PROJECT_ID="$RANDOM_PROJECT_ID"
+    else
+        echo -e "${RED}Auto-creation failed. Falling back to manual selection.${NC}"
+        # Fallback: let user pick or retry
+        while true; do
+            RANDOM_SUFFIX=$(LC_ALL=C tr -dc 'a-z0-9' < /dev/urandom | head -c "$MAX_SUFFIX_LEN")
+            SUGGESTED_ID="${CODELAB_PROJECT_PREFIX}-${RANDOM_SUFFIX}"
 
-        if [ -z "$TARGET_ID" ]; then
-            echo -e "${RED}Project ID cannot be empty.${NC}"
-            continue
-        fi
+            echo ""
+            echo "Select a Project ID:"
+            echo "  1. Press Enter to CREATE a new project: $SUGGESTED_ID"
+            echo "  2. Or type an existing Project ID to use."
+            read -p "Project ID: " USER_INPUT
 
-        echo "Checking status of '$TARGET_ID'..."
+            TARGET_ID="${USER_INPUT:-$SUGGESTED_ID}"
 
-        if gcloud projects describe "$TARGET_ID" >/dev/null 2>&1; then
-            echo -e "${GREEN}✓ Project '$TARGET_ID' exists and is accessible.${NC}"
-            PROJECT_ID="$TARGET_ID"
-            break
-        else
-            echo "Project '$TARGET_ID' not found. Attempting to create..."
-            if gcloud projects create "$TARGET_ID" --quiet; then
-                echo -e "${GREEN}✓ Successfully created project '$TARGET_ID'.${NC}"
+            if [ -z "$TARGET_ID" ]; then
+                echo -e "${RED}Project ID cannot be empty.${NC}"
+                continue
+            fi
+
+            echo "Checking status of '$TARGET_ID'..."
+
+            if gcloud projects describe "$TARGET_ID" >/dev/null 2>&1; then
+                echo -e "${GREEN}✓ Project '$TARGET_ID' exists and is accessible.${NC}"
                 PROJECT_ID="$TARGET_ID"
                 break
             else
-                echo -e "${RED}Failed to create '$TARGET_ID'. Please try a different ID.${NC}"
+                echo "Project '$TARGET_ID' not found. Attempting to create..."
+                if gcloud projects create "$TARGET_ID" --quiet; then
+                    echo -e "${GREEN}✓ Successfully created project '$TARGET_ID'.${NC}"
+                    PROJECT_ID="$TARGET_ID"
+                    break
+                else
+                    echo -e "${RED}Failed to create '$TARGET_ID'. Please try a different ID.${NC}"
+                fi
             fi
-        fi
-    done
+        done
+    fi
 
     gcloud config set project "$PROJECT_ID" --quiet || {
         echo -e "${RED}Failed to set active project.${NC}"
