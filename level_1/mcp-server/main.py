@@ -272,10 +272,13 @@ if __name__ == "__main__":
     logger.info(f"🔧 Tools: analyze_geological, analyze_botanical")
     
     # Run with HTTP transport for Cloud Run deployment
-    asyncio.run(
-        mcp.run_async(
-            transport="http",
-            host="0.0.0.0",
-            port=port,
+    try:
+        asyncio.run(
+            mcp.run_async(
+                transport="http",
+                host="0.0.0.0",
+                port=port,
+            )
         )
-    )
+    except (KeyboardInterrupt, asyncio.CancelledError):
+        logger.info("Server stopped gracefully.")
