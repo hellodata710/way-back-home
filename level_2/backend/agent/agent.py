@@ -142,6 +142,7 @@ root_agent = Agent(
     tools=agent_tools,
 
     # TODO: REPLACE_ADD_SUBAGENT
+    sub_agents=[multimedia_agent],
 
     # TODO: REPLACE_ADD_CALLBACK
 )
