@@ -10,7 +10,20 @@ from google.adk.tools.preload_memory_tool import PreloadMemoryTool
 logger = logging.getLogger(__name__)
 
 # TODO: REPLACE_ADD_SESSION_MEMORY
-
+async def add_session_to_memory(
+        callback_context: CallbackContext
+) -> Optional[types.Content]:
+    """Automatically save completed sessions to memory bank in the background"""
+    if hasattr(callback_context, "_invocation_context"):
+        invocation_context = callback_context._invocation_context
+        if invocation_context.memory_service:
+            # Use create_task to run this in the background without blocking the response
+            asyncio.create_task(
+                invocation_context.memory_service.add_session_to_memory(
+                    invocation_context.session
+                )
+            )
+            logger.info("Scheduled session save to memory bank in background")
 
 from agent.multimedia_agent import multimedia_agent
 from agent.tools.survivor_tools import get_survivors_with_skill, get_all_survivors, get_urgent_needs
