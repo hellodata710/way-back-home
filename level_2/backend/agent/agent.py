@@ -146,7 +146,8 @@ agent_tools = [
 
 
 # TODO: REPLACE_ADD_MEMORY_BANK_TOOL
-
+if USE_MEMORY_BANK:
+    agent_tools.append(PreloadMemoryTool())
 
 root_agent = Agent(
     model="gemini-2.5-flash",
@@ -158,4 +159,5 @@ root_agent = Agent(
     sub_agents=[multimedia_agent],
 
     # TODO: REPLACE_ADD_CALLBACK
+    after_agent_callback=add_session_to_memory if USE_MEMORY_BANK else None
 )
